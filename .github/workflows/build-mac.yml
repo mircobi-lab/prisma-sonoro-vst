@@ -1,0 +1,40 @@
+# Compila Prisma Sonoro per Mac (VST3, AU e app) su un Mac di GitHub e lo valida con pluginval.
+# I file pronti si scaricano dalla pagina dell'esecuzione, sezione "Artifacts".
+name: Build macOS
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configura (binario universale arm64 + x86_64)
+        run: cmake -B build -G Xcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+
+      - name: Compila
+        run: cmake --build build --config Release --target PrismaSonoro_VST3 PrismaSonoro_AU PrismaSonoro_Standalone -- -quiet
+
+      - name: Firma ad hoc e comprimi
+        run: |
+          cd "build/PrismaSonoro_artefacts/Release"
+          codesign --force --deep -s - "VST3/Prisma Sonoro.vst3"
+          codesign --force --deep -s - "AU/Prisma Sonoro.component"
+          codesign --force --deep -s - "Standalone/Prisma Sonoro.app"
+          ditto -c -k --keepParent "VST3/Prisma Sonoro.vst3"      PrismaSonoro-VST3-mac.zip
+          ditto -c -k --keepParent "AU/Prisma Sonoro.component"   PrismaSonoro-AU-mac.zip
+          ditto -c -k --keepParent "Standalone/Prisma Sonoro.app" PrismaSonoro-App-mac.zip
+
+      - name: Valida con pluginval
+        run: |
+          curl -sSL -o pv.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_macOS.zip
+          unzip -q pv.zip
+          ./pluginval.app/Contents/MacOS/pluginval --strictness-level 8 --validate-in-process --skip-gui-tests "build/PrismaSonoro_artefacts/Release/VST3/Prisma Sonoro.vst3"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PrismaSonoro-mac
+          path: build/PrismaSonoro_artefacts/Release/*.zip
