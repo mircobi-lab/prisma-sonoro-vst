@@ -42,12 +42,15 @@ jobs:
           name: PrismaSonoro-mac
           path: build/PrismaSonoro_artefacts/Release/*.zip
 
-      # con un tag "v..." i tre zip vengono pubblicati nella pagina Releases del repository
+      # a ogni aggiornamento del ramo main i tre zip vengono pubblicati nella pagina Releases
       - name: Pubblica la release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          name: Prisma Sonoro ${{ github.ref_name }}
+          tag_name: v1.0.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          name: Prisma Sonoro 1.0.${{ github.run_number }}
           body: |
             Plug-in per Mac (Apple Silicon e Intel, macOS 11 o successivo), validato con pluginval.
             - PrismaSonoro-VST3-mac.zip → ~/Library/Audio/Plug-Ins/VST3/
