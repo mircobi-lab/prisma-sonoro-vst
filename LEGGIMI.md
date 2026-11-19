@@ -93,7 +93,7 @@ Impostazioni → Plug-in: attiva «Usa le cartelle di sistema dei plug-in VST3»
 
 Il codice di Prisma Sonoro è tuo. Usa il framework JUCE 8, che ha una doppia licenza: AGPLv3 oppure licenza JUCE commerciale. La licenza JUCE «Starter» è gratuita fino a 20 000 $ l'anno di ricavi legati a JUCE (donazioni comprese). Se un giorno lo vendi o lo distribuisci, verifica quale delle due fa per te.
 
-I font Barlow Condensed e Share Tech Mono sono SIL Open Font License (testo in `Resources/OFL.txt`).
+Aspetto: stile hardware MBStudio (kit `MBStudioUI/`). Font Bebas Neue (© Dharma Type) e Antonio (© Vernon Adams), SIL Open Font License 1.1 (testi in `MBStudioUI/fonts/OFL-*.txt`). Logo MBSTUDIO91: marchio di MBStudio91.
 
 ## Struttura
 ```

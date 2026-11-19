@@ -38,10 +38,9 @@ juce_add_plugin(PrismaSonoro
     VST3_CATEGORIES Instrument Synth
     AU_MAIN_TYPE kAudioUnitType_MusicDevice)
 
-juce_add_binary_data(PrismaFonts SOURCES
-    Resources/BarlowCondensed-Regular.ttf
-    Resources/BarlowCondensed-SemiBold.ttf
-    Resources/ShareTechMono-Regular.ttf)
+# Stile hardware MBStudio (font Bebas Neue + Antonio, logo, LookAndFeel)
+include(MBStudioUI/MBStudioUI.cmake)
+mbstudio_ui_add(PrismaSonoro)
 
 target_sources(PrismaSonoro PRIVATE Source/PluginProcessor.cpp Source/PluginEditor.cpp)
 
@@ -51,5 +50,5 @@ target_compile_definitions(PrismaSonoro PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0)
 
 target_link_libraries(PrismaSonoro
-    PRIVATE PrismaFonts juce::juce_audio_utils juce::juce_dsp
+    PRIVATE juce::juce_audio_utils juce::juce_dsp
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)

@@ -1,86 +1,20 @@
 #include "PluginEditor.h"
-#include "BinaryData.h"
 
 using namespace juce;
 
 static String U(const char* s) { return String::fromUTF8(s); }
 static String num(double v, int dec) { return (dec <= 0 ? String((int) std::lround(v)) : String(v, dec)).replace(".", ","); }
 
-// ------------------------------------------------------------------ aspetto
-static Typeface::Ptr tfSans, tfSansBold, tfMono;
+// ------------------------------------------------------------------ aspetto (kit MBStudioUI)
+namespace ui = mbstudio::ui;
 
-PrismaLookAndFeel::PrismaLookAndFeel() {
-    if (!tfSans)     tfSans     = Typeface::createSystemTypefaceFor(BinaryData::BarlowCondensedRegular_ttf, BinaryData::BarlowCondensedRegular_ttfSize);
-    if (!tfSansBold) tfSansBold = Typeface::createSystemTypefaceFor(BinaryData::BarlowCondensedSemiBold_ttf, BinaryData::BarlowCondensedSemiBold_ttfSize);
-    if (!tfMono)     tfMono     = Typeface::createSystemTypefaceFor(BinaryData::ShareTechMonoRegular_ttf, BinaryData::ShareTechMonoRegular_ttfSize);
-    setDefaultSansSerifTypeface(tfSans);
-    setColour(ResizableWindow::backgroundColourId, pal::ink);
-    setColour(Label::textColourId, pal::paper);
-    setColour(Slider::textBoxTextColourId, pal::paper);
-    setColour(Slider::textBoxOutlineColourId, Colours::transparentBlack);
-    setColour(Slider::textBoxBackgroundColourId, Colours::transparentBlack);
-    setColour(ComboBox::backgroundColourId, pal::deep);
-    setColour(ComboBox::outlineColourId, pal::line);
-    setColour(ComboBox::textColourId, pal::paper);
-    setColour(ComboBox::arrowColourId, pal::glow);
-    setColour(PopupMenu::backgroundColourId, pal::panel);
-    setColour(PopupMenu::textColourId, pal::paper);
-    setColour(PopupMenu::highlightedBackgroundColourId, pal::glow);
-    setColour(PopupMenu::highlightedTextColourId, pal::ink);
-    setColour(PopupMenu::headerTextColourId, pal::glow);
-    setColour(TextButton::buttonColourId, pal::deep);
-    setColour(TextButton::textColourOffId, pal::paper);
-    setColour(TextButton::textColourOnId, pal::ink);
-    setColour(ToggleButton::textColourId, pal::paper);
-    setColour(TextEditor::backgroundColourId, pal::deep);
-    setColour(TextEditor::textColourId, pal::paper);
-    setColour(TextEditor::highlightColourId, pal::glow.withAlpha(0.4f));
-    setColour(CaretComponent::caretColourId, pal::glow);
-}
-
-Font PrismaLookAndFeel::sans(float h, bool bold) { return Font(FontOptions(bold ? tfSansBold : tfSans).withHeight(h)); }
-Font PrismaLookAndFeel::mono(float h) { return Font(FontOptions(tfMono).withHeight(h)); }
-
-void PrismaLookAndFeel::drawRotarySlider(Graphics& g, int x, int y, int w, int h, float pos, float a0, float a1, Slider& s) {
-    auto r = Rectangle<float>((float) x, (float) y, (float) w, (float) h).reduced(4.0f);
-    float d = jmin(r.getWidth(), r.getHeight()); auto c = r.withSizeKeepingCentre(d, d);
-    float ang = a0 + pos * (a1 - a0), th = 3.0f;
-    Path bg; bg.addCentredArc(c.getCentreX(), c.getCentreY(), d / 2 - th, d / 2 - th, 0, a0, a1, true);
-    g.setColour(pal::line); g.strokePath(bg, PathStrokeType(th, PathStrokeType::curved, PathStrokeType::rounded));
-    Path fg; fg.addCentredArc(c.getCentreX(), c.getCentreY(), d / 2 - th, d / 2 - th, 0, a0, ang, true);
-    g.setColour(s.isEnabled() ? pal::glow : pal::muted); g.strokePath(fg, PathStrokeType(th, PathStrokeType::curved, PathStrokeType::rounded));
-    Point<float> p = c.getCentre().getPointOnCircumference(d / 2 - th - 6, ang);
-    g.setColour(pal::paper); g.drawLine(Line<float>(c.getCentre().getPointOnCircumference(d * 0.12f, ang), p), 2.0f);
-}
-
-void PrismaLookAndFeel::drawLinearSlider(Graphics& g, int x, int y, int w, int h, float pos, float, float, Slider::SliderStyle, Slider&) {
-    float cy = y + h * 0.5f;
-    g.setColour(pal::line); g.fillRoundedRectangle((float) x, cy - 2, (float) w, 4, 2);
-    g.setColour(pal::glow); g.fillRoundedRectangle((float) x, cy - 2, pos - x, 4, 2);
-    g.setColour(pal::paper); g.fillEllipse(pos - 7, cy - 7, 14, 14);
-}
-
-void PrismaLookAndFeel::drawToggleButton(Graphics& g, ToggleButton& b, bool hl, bool) {
-    auto r = b.getLocalBounds().toFloat().reduced(1);
-    bool on = b.getToggleState();
-    g.setColour(on ? pal::paper : (hl ? pal::line.brighter(0.2f) : pal::deep)); g.fillRoundedRectangle(r, r.getHeight() / 2);
-    g.setColour(on ? pal::paper : pal::line); g.drawRoundedRectangle(r, r.getHeight() / 2, 1);
-    g.setColour(on ? pal::ink : pal::paper); g.setFont(sans(15.0f, true)); g.drawText(b.getButtonText(), r, Justification::centred);
-}
-
-void PrismaLookAndFeel::drawButtonBackground(Graphics& g, Button& b, const Colour&, bool hl, bool down) {
-    auto r = b.getLocalBounds().toFloat().reduced(1);
-    bool accent = b.getProperties()["accent"];
-    g.setColour(accent ? (down ? pal::glow.darker(0.2f) : pal::glow) : (down ? pal::line : hl ? pal::line.withAlpha(0.6f) : pal::deep));
-    g.fillRoundedRectangle(r, r.getHeight() / 2);
-    g.setColour(accent ? pal::glow : pal::line); g.drawRoundedRectangle(r, r.getHeight() / 2, 1);
-}
+Font PrismaLookAndFeel::sans(float h, bool bold) { return bold ? ui::Fonts::display(h * 1.15f) : ui::Fonts::label(h * 1.1f); }
+Font PrismaLookAndFeel::mono(float h) { return ui::Fonts::label(h * 1.12f); }
 
 // ------------------------------------------------------------------ forma d'onda disegnabile
 void WaveView::paint(Graphics& g) {
     auto r = getLocalBounds().toFloat();
-    g.setColour(pal::deep); g.fillRoundedRectangle(r, 6);
-    g.setColour(pal::line); g.drawRoundedRectangle(r.reduced(0.5f), 6, 1);
+    ui::paintRecess(g, r);
     g.setColour(pal::line.withAlpha(0.6f)); g.drawHorizontalLine((int) r.getCentreY(), r.getX() + 8, r.getRight() - 8);
     for (int i = 1; i < 4; ++i) g.drawVerticalLine((int) (r.getX() + r.getWidth() * i / 4), r.getY() + 8, r.getBottom() - 8);
     auto a = r.reduced(10, 14); Path p; const int N = (int) cyc.size();
@@ -107,7 +41,7 @@ void WaveView::mouseUp(const MouseEvent&) { lastIdx = -1; if (onEdit) onEdit(cyc
 // ------------------------------------------------------------------ armonici
 void HarmView::paint(Graphics& g) {
     auto r = getLocalBounds().toFloat();
-    g.setColour(pal::deep); g.fillRoundedRectangle(r, 6); g.setColour(pal::line); g.drawRoundedRectangle(r.reduced(0.5f), 6, 1);
+    ui::paintRecess(g, r);
     auto a = r.reduced(10, 22).withTrimmedBottom(-8); float mx = 1e-9f;
     for (int k = 0; k < table.count; ++k) mx = jmax(mx, table.p[(size_t) k].amp);
     auto hOf = [&](float amp) { float db = amp > 0 ? 20.0f * std::log10(amp / mx) : -60.0f; return jlimit(0.0f, 1.0f, (db + 60.0f) / 60.0f); };
@@ -140,7 +74,7 @@ void HarmView::edit(const MouseEvent& e) {
 // ------------------------------------------------------------------ oscilloscopio
 void ScopeView::paint(Graphics& g) {
     auto r = getLocalBounds().toFloat();
-    g.setColour(pal::deep); g.fillRoundedRectangle(r, 6); g.setColour(pal::line); g.drawRoundedRectangle(r.reduced(0.5f), 6, 1);
+    ui::paintRecess(g, r);
     auto xy = r.removeFromLeft(r.getHeight()).reduced(10); auto tw = r.reduced(10);
     const int W = proc.scopeWrite.load(), M = PrismaProcessor::kScope - 1;
     float pk = 1e-4f; for (int i = 0; i < 4096; ++i) { int j = (W - 1 - i) & M; pk = jmax(pk, std::abs(proc.scopeL[j]), std::abs(proc.scopeR[j])); }
@@ -156,7 +90,7 @@ void ScopeView::paint(Graphics& g) {
     Path q; for (int i = 0; i < span; ++i) { int j = (start + i) & M; float x = tw.getX() + tw.getWidth() * i / span, y = tw.getCentreY() - proc.scopeL[j] * G * tw.getHeight() * 0.5f; i ? q.lineTo(x, y) : q.startNewSubPath(x, y); }
     g.setColour(colour.withAlpha(0.25f)); g.strokePath(q, PathStrokeType(4.0f)); g.setColour(colour); g.strokePath(q, PathStrokeType(1.3f));
     g.setColour(pal::muted); g.setFont(PrismaLookAndFeel::mono(11.0f));
-    g.drawText(U("XY  L→X  R→Y"), xy.toNearestInt().translated(0, -4), Justification::topLeft);
+    g.drawText(U("XY  L > X  R > Y"), xy.toNearestInt().translated(0, -4), Justification::topLeft);
     g.drawText("USCITA SINISTRA", tw.toNearestInt().translated(0, -4), Justification::topLeft);
 }
 
@@ -165,9 +99,9 @@ PrismaEditor::Knob* PrismaEditor::makeKnob(const char* id, const char* label, bo
     auto k = std::make_unique<Knob>();
     k->s.setSliderStyle(linear ? Slider::LinearHorizontal : Slider::RotaryHorizontalVerticalDrag);
     k->s.setTextBoxStyle(linear ? Slider::TextBoxRight : Slider::TextBoxBelow, false, linear ? 86 : 70, 18);
-    k->s.setColour(Slider::textBoxTextColourId, pal::paper);
-    k->l.setText(U(label), dontSendNotification); k->l.setJustificationType(linear ? Justification::centredLeft : Justification::centred);
-    k->l.setFont(PrismaLookAndFeel::sans(14.0f)); k->l.setColour(Label::textColourId, pal::muted);
+    k->s.setColour(Slider::textBoxTextColourId, pal::muted);
+    k->l.setText(U(label).toUpperCase(), dontSendNotification); k->l.setJustificationType(linear ? Justification::centredLeft : Justification::centred);
+    k->l.setFont(PrismaLookAndFeel::sans(13.0f)); k->l.setColour(Label::textColourId, pal::paper);
     addAndMakeVisible(k->s); addAndMakeVisible(k->l);
     k->a = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(proc.apvts, id, k->s);
     k->s.setLookAndFeel(&lnf);
@@ -223,7 +157,7 @@ PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(
     btnAtt.push_back(std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(proc.apvts, "sweepOn", sweepBtn));
     btnAtt.push_back(std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(proc.apvts, "sweepLoop", loopBtn));
 
-    strikeBtn.getProperties().set("accent", true); strikeBtn.setColour(TextButton::textColourOffId, pal::ink);
+    strikeBtn.getProperties().set("led", true); strikeBtn.getProperties().set("ledColour", "ffff3b30");
     for (auto* b : {&strikeBtn, &a440Btn, &a432Btn, &copyBtn, &smoothBtn, &sineBtn, &invertBtn}) addAndMakeVisible(*b);
     strikeBtn.onClick = [this] { proc.requestStrike(); };
     a440Btn.onClick = [this] { proc.setParam("a4", 440.0f); };
@@ -296,32 +230,35 @@ void PrismaEditor::timerCallback() {
 }
 
 void PrismaEditor::paint(Graphics& g) {
-    g.fillAll(pal::ink);
-    // intestazione
+    ui::paintChassis(g, getLocalBounds());
+    // intestazione: marchio stampato + badge, lettura in un vano incassato con LED del colore dell'ottava
     auto h = headerArea.toFloat();
-    g.setColour(pal::paper); g.setFont(PrismaLookAndFeel::sans(34.0f, true)); g.drawText("PRISMA SONORO", h.withWidth(250).translated(0, -6), Justification::centredLeft);
-    g.setColour(pal::muted); g.setFont(PrismaLookAndFeel::sans(14.0f)); g.drawText(U("MBStudio91 · sintesi additiva per il benessere"), h.withWidth(300).translated(0, 18), Justification::centredLeft);
-    auto rd = h.withTrimmedLeft(300);
-    g.setColour(readColour); g.fillEllipse(rd.getX(), rd.getCentreY() - 9, 18, 18);
-    g.setFont(PrismaLookAndFeel::mono(30.0f)); g.drawText(readHz, rd.withTrimmedLeft(28).withWidth(230), Justification::centredLeft);
-    g.setColour(pal::paper); g.setFont(PrismaLookAndFeel::mono(13.0f)); g.drawText(readNote, rd.withTrimmedLeft(270).withHeight(h.getHeight() / 2), Justification::bottomLeft);
-    g.setColour(pal::muted); g.drawText(readInfo, rd.withTrimmedLeft(270).withTrimmedTop(h.getHeight() / 2 + 2), Justification::topLeft);
-    g.setColour(pal::line); g.drawHorizontalLine((int) h.getBottom() + 4, 16.0f, (float) getWidth() - 16);
-    // sezioni
+    ui::paintBrand(g, h.withWidth(420).withSizeKeepingCentre(420, 30), "Prisma Sonoro");
+    auto rd = h.withTrimmedLeft(436);
+    ui::paintRecess(g, rd);
+    auto in = rd.reduced(12, 6);
+    ui::paintLed(g, { in.getX() + 7, in.getCentreY() }, 6.0f, readColour, 1.0f);
+    g.setColour(pal::paper); g.setFont(ui::Fonts::thin(38.0f)); g.drawText(readHz, in.withTrimmedLeft(24).withWidth(210), Justification::centredLeft);
+    g.setFont(ui::Fonts::label(15.0f)); g.drawText(readNote, in.withTrimmedLeft(240).withHeight(in.getHeight() / 2), Justification::bottomLeft);
+    g.setColour(pal::muted); g.drawText(readInfo, in.withTrimmedLeft(240).withTrimmedTop(in.getHeight() / 2 + 2), Justification::topLeft);
+    ui::paintEngravedLine(g, { 16.0f, h.getBottom() + 6 }, { (float) getWidth() - 16, h.getBottom() + 6 });
+    // sezioni: chip bianco col titolo e linea incisa sopra
     auto section = [&](Rectangle<int> r, const char* t) {
-        g.setColour(pal::panel); g.fillRoundedRectangle(r.toFloat(), 6); g.setColour(pal::line); g.drawRoundedRectangle(r.toFloat().reduced(0.5f), 6, 1);
-        g.setColour(pal::muted); g.setFont(PrismaLookAndFeel::sans(13.0f, true)); g.drawText(String(t).toUpperCase(), r.reduced(10, 4).withHeight(16), Justification::topLeft); };
+        auto f = r.toFloat();
+        ui::paintEngravedLine(g, { f.getX(), f.getY() + 1 }, { f.getRight(), f.getY() + 1 });
+        ui::paintChip(g, { f.getX() + 2, f.getY() + 6, ui::chipWidth(U(t).toUpperCase(), 17.0f), 17.0f }, U(t).toUpperCase()); };
     section(secSource, "Sorgente"); section(secTimbre, "Timbro e battimento"); section(secMod, "Respiro, tremolo e rumore");
     section(secSweep, "Sweep logaritmico"); section(secEnv, "Inviluppo e uscita");
-    if (progress > 0) { auto pr = secSweep.reduced(12).removeFromBottom(4).toFloat(); g.setColour(pal::deep); g.fillRoundedRectangle(pr, 2); g.setColour(pal::glow); g.fillRoundedRectangle(pr.withWidth(pr.getWidth() * progress), 2); }
-    g.setColour(pal::muted); g.setFont(PrismaLookAndFeel::sans(13.0f));
-    g.drawText(U("Esperienza d'ascolto per il rilassamento: non sostituisce cure o consigli medici. Binaurale solo in cuffia, volume moderato, mai alla guida. "
-               "Livelli: A fatto fisico · B studi con risultati · C studi preliminari · D tradizione."), Rectangle<int>(16, getHeight() - 28, getWidth() - 32, 22), Justification::centredLeft);
+    if (progress > 0) { auto pr = secSweep.reduced(12).removeFromBottom(4).toFloat(); ui::paintRecess(g, pr.expanded(1), 1.0f); g.setColour(ui::colours::ledGreen); g.fillRect(pr.withWidth(pr.getWidth() * progress)); }
+    g.setColour(pal::muted); g.setFont(ui::Fonts::label(12.5f));
+    g.drawFittedText(U("Esperienza d'ascolto per il rilassamento: non sostituisce cure o consigli medici. Binaurale solo in cuffia, volume moderato, mai alla guida. "
+               "Livelli: A fatto fisico - B studi con risultati - C studi preliminari - D tradizione."), Rectangle<int>(16, getHeight() - 32, getWidth() - 240, 30), Justification::centredLeft, 2, 1.0f);
+    ui::paintLogo(g, { (float) getWidth() - 206, (float) getHeight() - 27, 190, 20 }, false, ui::Imprint::debossed, Justification::centredRight);
 }
 
 void PrismaEditor::resized() {
     auto r = getLocalBounds().reduced(16, 10);
-    headerArea = r.removeFromTop(58);
+    headerArea = r.removeFromTop(60);
     r.removeFromTop(12); r.removeFromBottom(26);
     auto left = r.removeFromLeft(640); r.removeFromLeft(14); auto right = r;
 
@@ -333,7 +270,7 @@ void PrismaEditor::resized() {
 
     // sorgente
     secSource = right.removeFromTop(214); right.removeFromTop(8);
-    auto s = secSource.reduced(10).withTrimmedTop(18);
+    auto s = secSource.reduced(10).withTrimmedTop(22);
     auto row = s.removeFromTop(30); modeBox.setBounds(row.removeFromLeft(110)); row.removeFromLeft(6); modelBox.setBounds(row.removeFromLeft(178)); row.removeFromLeft(6); strikeBtn.setBounds(row);
     s.removeFromTop(6); freqBox.setBounds(s.removeFromTop(28)); s.removeFromTop(6); libBox.setBounds(s.removeFromTop(28)); s.removeFromTop(6);
     row = s.removeFromTop(30); kFixed->l.setBounds(row.removeFromLeft(70)); droneBtn.setBounds(row.removeFromRight(96)); row.removeFromRight(6); kFixed->s.setBounds(row);
@@ -344,13 +281,13 @@ void PrismaEditor::resized() {
         const int w = 70; for (auto* k : ks) { auto c = area.removeFromLeft(w); k->l.setBounds(c.removeFromTop(16)); k->s.setBounds(c); area.removeFromLeft(4); } return area; };
     const int secH = 112;
     secTimbre = right.removeFromTop(secH); right.removeFromTop(8);
-    { auto a = secTimbre.reduced(10).withTrimmedTop(16); auto rest = knobRow(a, {kTilt, kInharm, kBeat}); beatBox.setBounds(rest.withSizeKeepingCentre(rest.getWidth() - 4, 28)); }
+    { auto a = secTimbre.reduced(10).withTrimmedTop(20); auto rest = knobRow(a, {kTilt, kInharm, kBeat}); beatBox.setBounds(rest.withSizeKeepingCentre(rest.getWidth() - 4, 28)); }
     secMod = right.removeFromTop(secH); right.removeFromTop(8);
-    { auto a = secMod.reduced(10).withTrimmedTop(16); auto rest = knobRow(a, {kBreath, kTremR, kTremD, kNoise}); noiseBox.setBounds(rest.withSizeKeepingCentre(rest.getWidth() - 4, 28)); }
+    { auto a = secMod.reduced(10).withTrimmedTop(20); auto rest = knobRow(a, {kBreath, kTremR, kTremD, kNoise}); noiseBox.setBounds(rest.withSizeKeepingCentre(rest.getWidth() - 4, 28)); }
     secSweep = right.removeFromTop(secH); right.removeFromTop(8);
-    { auto a = secSweep.reduced(10).withTrimmedTop(16).withTrimmedBottom(6); auto rest = knobRow(a, {kFrom, kTo, kMin});
+    { auto a = secSweep.reduced(10).withTrimmedTop(20).withTrimmedBottom(6); auto rest = knobRow(a, {kFrom, kTo, kMin});
       auto c = rest.reduced(2, 4); auto r1 = c.removeFromTop(28); sweepBtn.setBounds(r1.removeFromLeft(r1.getWidth() / 2 - 3)); r1.removeFromLeft(6); loopBtn.setBounds(r1);
       c.removeFromTop(8); dirBox.setBounds(c.removeFromTop(28)); }
     secEnv = right.removeFromTop(secH);
-    { auto a = secEnv.reduced(10).withTrimmedTop(16); knobRow(a, {kA, kD, kS, kR, kLevel}); }
+    { auto a = secEnv.reduced(10).withTrimmedTop(20); knobRow(a, {kA, kD, kS, kR, kLevel}); }
 }

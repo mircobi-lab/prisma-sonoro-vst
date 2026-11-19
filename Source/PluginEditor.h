@@ -1,25 +1,19 @@
 #pragma once
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "PluginProcessor.h"
+#include "MBStudioLookAndFeel.h"
 
+// Palette mappata sullo stile hardware MBStudio (kit MBStudioUI)
 namespace pal {
-    const juce::Colour ink   {0xff0f1220}, panel {0xff171b2e}, line {0xff2a3050}, deep {0xff090b15};
-    const juce::Colour paper {0xffece6d8}, muted {0xff9a9fb8}, glow {0xffe8b86a};
+    namespace C = mbstudio::ui::colours;
+    const juce::Colour ink = C::chassisBottom, panel = C::chassisTop, line = C::recessEdge, deep = C::recess;
+    const juce::Colour paper = C::print, muted = C::printDim, glow = C::ledAmber;
 }
 
-class PrismaLookAndFeel : public juce::LookAndFeel_V4 {
+class PrismaLookAndFeel : public mbstudio::ui::HardwareLookAndFeel {
 public:
-    PrismaLookAndFeel();
-    static juce::Font sans(float h, bool bold = false);
-    static juce::Font mono(float h);
-    void drawRotarySlider(juce::Graphics&, int x, int y, int w, int h, float pos, float a0, float a1, juce::Slider&) override;
-    void drawLinearSlider(juce::Graphics&, int x, int y, int w, int h, float pos, float minP, float maxP, juce::Slider::SliderStyle, juce::Slider&) override;
-    void drawToggleButton(juce::Graphics&, juce::ToggleButton&, bool highlighted, bool down) override;
-    void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&, bool highlighted, bool down) override;
-    juce::Font getComboBoxFont(juce::ComboBox&) override { return sans(15.0f); }
-    juce::Font getPopupMenuFont() override { return sans(15.0f); }
-    juce::Font getTextButtonFont(juce::TextButton&, int) override { return sans(15.0f, true); }
-    juce::Font getLabelFont(juce::Label& l) override { return l.getFont(); }
+    static juce::Font sans(float h, bool bold = false);   // Antonio Light / Bebas Neue
+    static juce::Font mono(float h);                      // Antonio Light (letture e didascalie)
 };
 
 // Ciclo singolo: si può disegnare col mouse
