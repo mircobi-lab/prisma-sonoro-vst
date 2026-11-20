@@ -100,6 +100,8 @@ void PrismaProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     if (tableDirty.load()) { const juce::SpinLock::ScopedTryLockType tl(tableLock); if (tl.isLocked()) { engine.setUserTable(pendingTable); tableDirty = false; } }
     engine.setParams(readParams());
 
+    if (panicRequested.exchange(false)) { engine.panic(); strikeRequests = 0; strikeOffSamples = -1; }
+
     // colpo manuale dal pulsante: nota 60, rilasciata dopo 1,5 s (i modelli percussivi continuano a risuonare)
     if (strikeRequests.exchange(0) > 0) { engine.noteOn(60, 0.9f); strikeOffSamples = (int) (1.5 * sr); }
     if (strikeOffSamples >= 0) { strikeOffSamples -= n; if (strikeOffSamples < 0) engine.noteOff(60); }

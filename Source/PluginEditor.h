@@ -79,6 +79,7 @@ private:
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtt;
     juce::ToggleButton droneBtn {"Bordone"}, sweepBtn {"Sweep"}, loopBtn {"Ripeti"};
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> btnAtt;
+    juce::TextButton panicBtn {"Panic"}; int panicFlash = 0;
     juce::TextButton strikeBtn {"Colpo"}, a440Btn {"440"}, a432Btn {"432"}, copyBtn {"Copia nel disegno"}, smoothBtn {"Liscia"}, sineBtn {"Sinusoide"}, invertBtn {"Inverti"};
 
     WaveView wave; HarmView harm; ScopeView scope;

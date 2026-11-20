@@ -42,6 +42,7 @@ public:
 
     // colpo manuale (pulsante dell'interfaccia)
     void requestStrike() { strikeRequests.fetch_add(1); }
+    void requestPanic() noexcept { panicRequested = true; }   // MIDI PANIC, eseguito all'inizio del blocco audio
 
     // dati per la visualizzazione
     static constexpr int kScope = 8192;
@@ -59,6 +60,7 @@ private:
     prisma::Engine engine;
     juce::SpinLock tableLock; prisma::PartialTable pendingTable; std::atomic<bool> tableDirty {false};
     std::atomic<int> strikeRequests {0}; int strikeOffSamples = -1;
+    std::atomic<bool> panicRequested {false};
     double sr = 48000.0;
     juce::HeapBlock<float> tmpL, tmpR; int tmpSize = 0;
 

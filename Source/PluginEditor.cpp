@@ -160,6 +160,10 @@ PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(
     strikeBtn.getProperties().set("led", true); strikeBtn.getProperties().set("ledColour", "ffff3b30");
     for (auto* b : {&strikeBtn, &a440Btn, &a432Btn, &copyBtn, &smoothBtn, &sineBtn, &invertBtn}) addAndMakeVisible(*b);
     strikeBtn.onClick = [this] { proc.requestStrike(); };
+    panicBtn.setTooltip("MIDI PANIC: spegne subito tutte le note suonate (il drone resta)");
+    panicBtn.getProperties().set("led", true); panicBtn.getProperties().set("ledColour", "ffff3b30");
+    panicBtn.onClick = [this] { proc.requestPanic(); panicFlash = 15; };
+    addAndMakeVisible(panicBtn);
     a440Btn.onClick = [this] { proc.setParam("a4", 440.0f); };
     a432Btn.onClick = [this] { proc.setParam("a4", 432.0f); };
 
@@ -211,6 +215,8 @@ void PrismaEditor::refreshWave(bool force) {
 
 void PrismaEditor::timerCallback() {
     refreshWave();
+    if (panicFlash > 0) --panicFlash;
+    panicBtn.setToggleState(panicFlash > 0 && (panicFlash / 3) % 2 == 0, juce::dontSendNotification);
     const bool fixed = pv("mode") > 0.5f; const float a4 = pv("a4");
     float hz = fixed ? (pv("sweepOn") > 0.5f ? proc.currentHz.load() : pv("fixedHz")) : 0.0f;
     if (fixed && hz <= 0) hz = pv("fixedHz");
@@ -271,7 +277,8 @@ void PrismaEditor::resized() {
     // sorgente
     secSource = right.removeFromTop(214); right.removeFromTop(8);
     auto s = secSource.reduced(10).withTrimmedTop(22);
-    auto row = s.removeFromTop(30); modeBox.setBounds(row.removeFromLeft(110)); row.removeFromLeft(6); modelBox.setBounds(row.removeFromLeft(178)); row.removeFromLeft(6); strikeBtn.setBounds(row);
+    auto row = s.removeFromTop(30); modeBox.setBounds(row.removeFromLeft(110)); row.removeFromLeft(6); modelBox.setBounds(row.removeFromLeft(178)); row.removeFromLeft(6);
+    { const int half = (row.getWidth() - 6) / 2; strikeBtn.setBounds(row.removeFromLeft(half)); row.removeFromLeft(6); panicBtn.setBounds(row); }
     s.removeFromTop(6); freqBox.setBounds(s.removeFromTop(28)); s.removeFromTop(6); libBox.setBounds(s.removeFromTop(28)); s.removeFromTop(6);
     row = s.removeFromTop(30); kFixed->l.setBounds(row.removeFromLeft(70)); droneBtn.setBounds(row.removeFromRight(96)); row.removeFromRight(6); kFixed->s.setBounds(row);
     s.removeFromTop(4);

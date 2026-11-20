@@ -380,6 +380,8 @@ public:
     // i modelli percussivi (campane, gong, diapason…) continuano a risuonare dopo il rilascio del tasto, come lo strumento vero
     void noteOff(int note) { for (auto& v : voices) if (v.active && v.held && v.note == note) { if (v.percussive) v.held = false; else v.release(); } }
     void allNotesOff() { for (auto& v : voices) if (v.active) v.release(); }
+    // MIDI PANIC: spegne subito tutte le voci suonate (il drone, comandato dal pannello, resta com'è)
+    void panic() { for (auto& v : voices) { v.active = false; v.held = false; v.stage = 0; v.env = 0; } }
 
     double currentFixed() const {
         if (!P.sweepOn) return P.fixedHz;
