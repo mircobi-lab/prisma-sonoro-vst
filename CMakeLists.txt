@@ -22,6 +22,7 @@ if(APPLE)
 endif()
 
 juce_add_plugin(PrismaSonoro
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/icons/prisma-sonoro-macos-1024.png"
     COMPANY_NAME "MBStudio91"
     COMPANY_WEBSITE "https://mbstudio91.it"
     BUNDLE_ID "it.mbstudio91.prismasonoro"
