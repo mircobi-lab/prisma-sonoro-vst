@@ -104,11 +104,12 @@ PrismaEditor::Knob* PrismaEditor::makeKnob(const char* id, const char* label, bo
     k->l.setFont(PrismaLookAndFeel::sans(13.0f)); k->l.setColour(Label::textColourId, pal::paper);
     addAndMakeVisible(k->s); addAndMakeVisible(k->l);
     k->a = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(proc.apvts, id, k->s);
+    mbstudio::midi::tag(k->s, id);
     k->s.setLookAndFeel(&lnf);
     knobs.push_back(std::move(k)); return knobs.back().get();
 }
 
-PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(p), scope(p) {
+PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(p), scope(p), midiButtons(p.midiMap), midiOverlay(p.midiMap) {
     setLookAndFeel(&lnf);
 
     kFixed = makeKnob("fixedHz", "Frequenza", true); kA4 = makeKnob("a4", "Diapason La", true);
@@ -119,6 +120,7 @@ PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(
 
     auto combo = [this](ComboBox& c, const char* id, const StringArray& items) {
         c.addItemList(items, 1); addAndMakeVisible(c);
+        if (id) mbstudio::midi::tag(c, id);
         if (id) comboAtt.push_back(std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(proc.apvts, id, c)); };
     StringArray models; for (int m = 0; m < prisma::NumModels; ++m) models.add(U(prisma::modelName(m)));
     combo(modeBox, "mode", {"Note MIDI", "Hz fisso"});
@@ -153,6 +155,7 @@ PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(
     };
 
     for (auto* b : {&droneBtn, &sweepBtn, &loopBtn}) addAndMakeVisible(*b);
+    mbstudio::midi::tag(droneBtn, "drone"); mbstudio::midi::tag(sweepBtn, "sweepOn"); mbstudio::midi::tag(loopBtn, "sweepLoop");
     btnAtt.push_back(std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(proc.apvts, "drone", droneBtn));
     btnAtt.push_back(std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(proc.apvts, "sweepOn", sweepBtn));
     btnAtt.push_back(std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(proc.apvts, "sweepLoop", loopBtn));
@@ -183,6 +186,8 @@ PrismaEditor::PrismaEditor(PrismaProcessor& p) : AudioProcessorEditor(&p), proc(
         proc.setUserHarmonics(t); refreshWave(true); };
     addAndMakeVisible(wave); addAndMakeVisible(harm); addAndMakeVisible(scope);
 
+    addAndMakeVisible(midiButtons);
+    addAndMakeVisible(midiOverlay);   // per ultimo: sopra a tutto
     setSize(1120, 810);
     refreshWave(true);
     startTimerHz(30);
@@ -240,7 +245,7 @@ void PrismaEditor::paint(Graphics& g) {
     // intestazione: marchio stampato + badge, lettura in un vano incassato con LED del colore dell'ottava
     auto h = headerArea.toFloat();
     ui::paintBrand(g, h.withWidth(420).withSizeKeepingCentre(420, 30), "Prisma Sonoro");
-    auto rd = h.withTrimmedLeft(436);
+    auto rd = h.withTrimmedLeft(436).withTrimmedRight(250);
     ui::paintRecess(g, rd);
     auto in = rd.reduced(12, 6);
     ui::paintLed(g, { in.getX() + 7, in.getCentreY() }, 6.0f, readColour, 1.0f);
@@ -265,6 +270,8 @@ void PrismaEditor::paint(Graphics& g) {
 void PrismaEditor::resized() {
     auto r = getLocalBounds().reduced(16, 10);
     headerArea = r.removeFromTop(60);
+    midiButtons.setBounds(headerArea.getRight() - 236, headerArea.getCentreY() - 15, 236, 30);
+    midiOverlay.setBounds(getLocalBounds());
     r.removeFromTop(12); r.removeFromBottom(26);
     auto left = r.removeFromLeft(640); r.removeFromLeft(14); auto right = r;
 

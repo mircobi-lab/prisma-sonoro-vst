@@ -3,6 +3,7 @@
 #include <atomic>
 #include "dsp/PrismaDSP.h"
 #include "Library.h"
+#include "MBStudioMidi.h"
 
 class PrismaProcessor : public juce::AudioProcessor {
 public:
@@ -34,6 +35,7 @@ public:
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
     juce::AudioProcessorValueTreeState apvts;
+    mbstudio::midi::MidiMapper midiMap;               // MIDI Learn e profili controller
 
     // forma disegnata (thread dei messaggi): 256 punti di un ciclo
     std::vector<float> userCycle;

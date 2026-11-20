@@ -63,7 +63,12 @@ APVTS::ParameterLayout PrismaProcessor::createLayout() {
 
 PrismaProcessor::PrismaProcessor()
     : AudioProcessor(BusesProperties().withOutput("Uscita", juce::AudioChannelSet::stereo(), true)),
-      apvts(*this, nullptr, "PRISMA", createLayout()) {
+      apvts(*this, nullptr, "PRISMA", createLayout()),
+      midiMap(*this, "Prisma Sonoro") {
+    // banchi per i profili dei controller: A manopole principali, B seconda riga, C fader
+    midiMap.setBanks({ juce::StringArray { "fixedHz", "a4", "tilt", "inharm", "beatHz", "breath", "tremRate", "tremDepth" },
+                       juce::StringArray { "attack", "decay", "sustain", "release", "level", "noiseDb", "sweepFrom", "sweepTo" },
+                       juce::StringArray { "sweepMin" }, juce::StringArray {} });
     userCycle.resize(256);
     for (int i = 0; i < 256; ++i) userCycle[(size_t) i] = std::sin(juce::MathConstants<float>::twoPi * i / 256.0f);
     pushTable(prisma::harmonicsFromCycle(userCycle));
@@ -94,6 +99,7 @@ prisma::Params PrismaProcessor::readParams() const {
 
 void PrismaProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi) {
     juce::ScopedNoDenormals noDenormals;
+    midiMap.process(midi);
     const int n = buffer.getNumSamples();
     if (n > tmpSize) { tmpSize = n; tmpL.allocate((size_t) n, true); tmpR.allocate((size_t) n, true); }
 
@@ -151,6 +157,8 @@ void PrismaProcessor::getStateInformation(juce::MemoryBlock& destData) {
     auto state = apvts.copyState();
     juce::MemoryBlock mb(userCycle.data(), userCycle.size() * sizeof(float));
     state.setProperty("userCycle", mb.toBase64Encoding(), nullptr);
+    state.removeChild(state.getChildWithName("MIDIMAP"), nullptr);
+    state.appendChild(midiMap.toValueTree(), nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary(*xml, destData);
 }
 
@@ -162,6 +170,7 @@ void PrismaProcessor::setStateInformation(const void* data, int sizeInBytes) {
             if (mb.fromBase64Encoding(state.getProperty("userCycle").toString()) && mb.getSize() == 256 * sizeof(float)) {
                 std::vector<float> cyc(256); std::memcpy(cyc.data(), mb.getData(), mb.getSize()); setUserCycle(cyc);
             }
+            if (auto mm = state.getChildWithName("MIDIMAP"); mm.isValid()) { midiMap.fromValueTree(mm); state.removeChild(mm, nullptr); }
             apvts.replaceState(state);
         }
     }
